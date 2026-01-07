@@ -301,7 +301,7 @@ RSS_URL = "https://www.hidro.gob.ar/RSS/AACrioplarss.asp"
 @app.route("/api/alertas")
 def get_alertas():
     try:
-        feed = parse_rss_with_timeout(RSS_URL, timeout=10)
+        feed = parse_rss_with_timeout(RSS_URL, timeout=120)
         
         if not hasattr(feed, 'entries'):
             return jsonify([]), 200
@@ -318,7 +318,7 @@ def get_alertas():
 @app.route("/api/altura_sf")
 def api_altura_sf():
     try:
-        feed = parse_rss_with_timeout("https://www.hidro.gob.ar/rss/AHrss.asp", timeout=10)
+        feed = parse_rss_with_timeout("https://www.hidro.gob.ar/rss/AHrss.asp", timeout=120)
 
         if not hasattr(feed, 'entries') or not feed.entries:
             return jsonify({"error": "No hay datos disponibles"}), 200
