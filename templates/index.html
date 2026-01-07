@@ -802,7 +802,7 @@
                 </li>
                 <li>
                   <a
-                    href="https://www.hidro.gov.ar/oceanografia/alturashorarias.asp"
+                    href="https://www.hidro.gob.ar/oceanografia/alturashorarias.asp"
                     target="_blank"
                     >Hidrografía - Alturas Horarias</a
                   >
@@ -1066,40 +1066,39 @@
       // ==================== FUNCIÓN PARA ALERTAS ====================
       async function fetchAlertas() {
         try {
+          const response = await fetch("/api/alertas");
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+
+          const data = await response.json();
           const alertasBody = document.getElementById("alertas-body");
-          alertasBody.innerHTML = "<p>Cargando avisos...</p>";
-
-          // Fetch directly from browser (CORS might block, but try first)
-          const response = await fetch(
-            "https://www.hidro.gob.ar/RSS/AACrioplarss.asp",
-            {
-              mode: "cors",
-              cache: "no-cache",
-            }
-          );
-
-          const text = await response.text();
-          const parser = new DOMParser();
-          const xml = parser.parseFromString(text, "text/xml");
-          const items = xml.querySelectorAll("item description");
-
           alertasBody.innerHTML = "";
+
+          if (!data || data.length === 0) {
+            alertasBody.innerHTML = "<p>No hay avisos vigentes.</p>";
+            return;
+          }
+
           let estado = "blue";
 
-          if (items.length === 0) {
-            alertasBody.innerHTML = "<p>No hay avisos vigentes.</p>";
-          } else {
-            items.forEach((item) => {
-              const desc = item.textContent;
-              const p = document.createElement("p");
-              p.innerHTML = desc;
-              alertasBody.appendChild(p);
+          data.forEach((desc) => {
+            const p = document.createElement("p");
+            p.innerHTML = desc;
+            alertasBody.appendChild(p);
 
-              if (desc.toLowerCase().includes("amarillo")) estado = "yellow";
-              if (desc.toLowerCase().includes("naranja")) estado = "orange";
-              if (desc.toLowerCase().includes("rojo")) estado = "red";
-            });
-          }
+            const texto = desc.toLowerCase();
+            if (texto.includes("alerta")) estado = "red";
+            else if (texto.includes("naranja") && estado !== "red")
+              estado = "orange";
+            else if (
+              texto.includes("amarillo") &&
+              estado !== "red" &&
+              estado !== "orange"
+            )
+              estado = "yellow";
+          });
 
           const panel = document.getElementById("panel-alertas");
           panel.querySelector(".panel-header").style.backgroundColor =
@@ -1111,113 +1110,48 @@
               ? "#ffc107"
               : "#0d6efd";
         } catch (error) {
-          console.error("Error directo, usando API backend:", error);
-          // Fallback to backend API
-          try {
-            const response = await fetch("/api/alertas");
-            const data = await response.json();
-            const alertasBody = document.getElementById("alertas-body");
-            alertasBody.innerHTML = "";
-
-            let estado = "blue";
-
-            if (data.length === 0) {
-              alertasBody.innerHTML = "<p>No hay avisos vigentes.</p>";
-            } else {
-              data.forEach((desc) => {
-                const p = document.createElement("p");
-                p.innerHTML = desc;
-                alertasBody.appendChild(p);
-
-                const texto = desc.toLowerCase();
-                if (
-                  texto.includes("no hay ningun aviso") &&
-                  texto.includes("alerta") &&
-                  texto.includes("cese")
-                ) {
-                  estado = "blue";
-                } else if (texto.includes("alerta")) {
-                  estado = "red";
-                } else if (texto.includes("aviso") && estado !== "red") {
-                  estado = "yellow";
-                } else if (
-                  texto.includes("cese") &&
-                  estado !== "red" &&
-                  estado !== "yellow"
-                ) {
-                  estado = "green";
-                }
-              });
-            }
-
-            const panel = document.getElementById("panel-alertas");
-            switch (estado) {
-              case "red":
-                panel.style.backgroundColor = "#b71c1c";
-                break;
-              case "yellow":
-                panel.style.backgroundColor = "#fbc02d";
-                break;
-              case "green":
-                panel.style.backgroundColor = "#2e7d32";
-                break;
-              default:
-                panel.style.backgroundColor = "#0d6efd";
-                break;
-            }
-          } catch (e2) {
-            document.getElementById("alertas-body").innerHTML =
-              "<p>Error cargando avisos.</p>";
-          }
+          console.error("Error fetching alertas:", error);
+          document.getElementById("alertas-body").innerHTML =
+            "<p>Servicio temporalmente no disponible</p>";
         }
       }
 
       // ==================== FUNCIÓN SAN FERNANDO ====================
       async function fetchSanFernando() {
         try {
-          const response = await fetch(
-            "https://www.hidro.gob.ar/rss/AHrss.asp",
-            {
-              mode: "cors",
-              cache: "no-cache",
-            }
-          );
-
-          const text = await response.text();
-          const parser = new DOMParser();
-          const xml = parser.parseFromString(text, "text/xml");
-          const items = xml.querySelectorAll("item description");
-
-          for (const item of items) {
-            const text = item.textContent;
-            const match = text.match(/San Fernando:\s*([\d,]+)\s*m/i);
-
-            if (match) {
-              const altura = match[1].replace(",", ".");
-              const horaMatch = text.match(/FECHA y HORA:\s*([0-9/:\s]+)/);
-              const hora = horaMatch ? horaMatch[1].trim() : "-";
-
-              document.getElementById("sf-altura").innerText = altura;
-              document.getElementById("sf-hora").innerText = hora;
-
-              // Fetch tendency from backend
-              const tendResponse = await fetch("/api/tendencia_sf");
-              const tendData = await tendResponse.json();
-              actualizarTendenciaUI(
-                tendData.tendencia,
-                tendData.icono,
-                tendData.cambio
-              );
-
-              return;
-            }
-          }
-        } catch (error) {
-          console.error("Error directo, usando API backend:", error);
-          // Fallback to backend
+          // Skip direct fetch, go straight to backend
           const response = await fetch("/api/altura_sf");
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+
           const data = await response.json();
-          // ... original logic
+
+          if (data.error) {
+            console.warn("San Fernando:", data.error);
+            document.getElementById("sf-altura").innerText = "N/D";
+            document.getElementById("sf-tendencia-texto").innerText =
+              data.error;
+            return;
+          }
+
+          document.getElementById("sf-altura").innerText = data.altura;
+          document.getElementById("sf-hora").innerText = data.hora || "-";
+
+          const ahora = new Date();
+          document.getElementById("sf-ultima-act").innerText =
+            ahora.toLocaleTimeString("es-AR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+
+          actualizarTendenciaUI(data.tendencia, data.icono, data.cambio);
+        } catch (error) {
+          console.error("Error San Fernando:", error);
+          document.getElementById("sf-altura").innerText = "Error";
+          document.getElementById("sf-tendencia-texto").innerText =
+            "No disponible";
         }
       }
 

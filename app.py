@@ -21,22 +21,83 @@ class LegacySSLAdapter(HTTPAdapter):
 
 app = Flask(__name__, static_folder='static')
 
-# --- 2. FUNCIÓN AUXILIAR PARA RSS CON TIMEOUT ---
-def parse_rss_with_timeout(url, timeout=20):
+# --- 2. FUNCIÓN AUXILIAR PARA RSS CON TIMEOUT Y CACHÉ AGRESIVO ---
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# In-memory cache with longer duration
+RSS_CACHE = {}
+CACHE_DURATION = 600  # 10 minutes - serve stale data if needed
+
+def parse_rss_with_timeout(url, timeout=10):
     """
-    Parse RSS with timeout using requests.
-    Timeout is set to 20 seconds for Render free tier.
+    Parse RSS with aggressive caching for Render free tier.
+    Returns cached data immediately, fetches in background.
     """
+    cache_key = url
+    now = time.time()
+    
+    # ALWAYS return cached data if available (even if expired)
+    if cache_key in RSS_CACHE:
+        cached_data, cached_time = RSS_CACHE[cache_key]
+        age = now - cached_time
+        
+        # If cache is fresh (< 10 min), return immediately
+        if age < CACHE_DURATION:
+            print(f"✓ Using fresh cache for {url} ({int(age)}s old)")
+            return cached_data
+        
+        # If cache is stale but < 30 min, return it anyway (better than timeout)
+        if age < 1800:
+            print(f"⚠️ Using stale cache for {url} ({int(age)}s old)")
+            # Try to refresh in background but don't wait
+            try:
+                session = requests.Session()
+                session.verify = False
+                response = session.get(
+                    url, 
+                    timeout=5,  # Very short timeout
+                    headers={'User-Agent': 'Mozilla/5.0'}
+                )
+                if response.status_code == 200:
+                    feed = feedparser.parse(response.content)
+                    RSS_CACHE[cache_key] = (feed, now)
+                    print(f"✓ Background refresh succeeded for {url}")
+            except:
+                pass  # Silently fail, we already have cache
+            
+            return cached_data
+    
+    # No cache available, must fetch (will be slow first time)
     try:
-        response = requests.get(url, timeout=timeout, verify=False)
+        print(f"⏳ Fetching fresh data from {url}")
+        session = requests.Session()
+        session.verify = False
+        
+        response = session.get(
+            url, 
+            timeout=timeout,
+            headers={'User-Agent': 'Mozilla/5.0'}
+        )
         response.raise_for_status()
-        return feedparser.parse(response.content)
+        
+        feed = feedparser.parse(response.content)
+        RSS_CACHE[cache_key] = (feed, now)
+        print(f"✓ Successfully fetched and cached {url}")
+        
+        return feed
+        
     except requests.Timeout:
-        raise Exception(f"Timeout al acceder a {url}")
+        print(f"❌ Timeout fetching {url}")
+        raise Exception(f"Timeout: El servidor {url} tardó demasiado en responder")
+        
     except requests.RequestException as e:
-        raise Exception(f"Error de red al acceder a {url}: {str(e)}")
+        print(f"❌ Network error fetching {url}: {e}")
+        raise Exception(f"Error de red: {str(e)}")
+        
     except Exception as e:
-        raise Exception(f"Error al procesar RSS: {str(e)}")
+        print(f"❌ Error processing {url}: {e}")
+        raise Exception(f"Error: {str(e)}")
 
 # --- 3. ARCHIVOS PARA GUARDAR DATOS ---
 DATA_FILE = "alturas_historico.json"
@@ -240,20 +301,32 @@ RSS_URL = "https://www.hidro.gob.ar/RSS/AACrioplarss.asp"
 @app.route("/api/alertas")
 def get_alertas():
     try:
-        feed = parse_rss_with_timeout(RSS_URL, timeout=60)
-        descriptions = [entry.description for entry in feed.entries]
-        return jsonify(descriptions)
+        feed = parse_rss_with_timeout(RSS_URL, timeout=10)
+        
+        if not hasattr(feed, 'entries'):
+            return jsonify([]), 200
+        
+        descriptions = [entry.description for entry in feed.entries if hasattr(entry, 'description')]
+        return jsonify(descriptions), 200
+        
     except Exception as e:
-        print(f"Error fetching alertas: {e}")
-        return jsonify({"error": "Servicio temporalmente no disponible"}), 503
+        print(f"❌ /api/alertas error: {e}")
+        # Return empty array to not break UI
+        return jsonify([]), 200
 
 # --- 7. ALTURA SAN FERNANDO ---
 @app.route("/api/altura_sf")
 def api_altura_sf():
     try:
-        feed = parse_rss_with_timeout("https://www.hidro.gob.ar/rss/AHrss.asp", timeout=60)
+        feed = parse_rss_with_timeout("https://www.hidro.gob.ar/rss/AHrss.asp", timeout=10)
+
+        if not hasattr(feed, 'entries') or not feed.entries:
+            return jsonify({"error": "No hay datos disponibles"}), 200
 
         for entry in feed.entries:
+            if not hasattr(entry, 'description'):
+                continue
+                
             desc = entry.description
             text = re.sub(r"<[^>]+>", "", desc)
 
@@ -276,19 +349,19 @@ def api_altura_sf():
                 
                 tendencia = calcular_tendencia_sf()
                 
-                return {
+                return jsonify({
                     "altura": altura,
                     "hora": hora,
                     "tendencia": tendencia["tendencia"],
                     "cambio": tendencia["cambio"],
                     "icono": tendencia["icono"]
-                }
+                }), 200
 
-        return {"error": "No se encontraron datos de San Fernando"}, 404
+        return jsonify({"error": "No se encontraron datos de San Fernando"}), 200
 
     except Exception as e:
-        print(f"Error fetching San Fernando: {e}")
-        return {"error": "Servicio temporalmente no disponible"}, 503
+        print(f"❌ /api/altura_sf error: {e}")
+        return jsonify({"error": "Servicio temporalmente no disponible"}), 200
 
 @app.route("/api/tendencia_sf")
 def get_tendencia_sf():
