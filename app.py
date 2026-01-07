@@ -21,7 +21,24 @@ class LegacySSLAdapter(HTTPAdapter):
 
 app = Flask(__name__, static_folder='static')
 
-# --- 2. ARCHIVOS PARA GUARDAR DATOS ---
+# --- 2. FUNCIÓN AUXILIAR PARA RSS CON TIMEOUT ---
+def parse_rss_with_timeout(url, timeout=20):
+    """
+    Parse RSS with timeout using requests.
+    Timeout is set to 20 seconds for Render free tier.
+    """
+    try:
+        response = requests.get(url, timeout=timeout, verify=False)
+        response.raise_for_status()
+        return feedparser.parse(response.content)
+    except requests.Timeout:
+        raise Exception(f"Timeout al acceder a {url}")
+    except requests.RequestException as e:
+        raise Exception(f"Error de red al acceder a {url}: {str(e)}")
+    except Exception as e:
+        raise Exception(f"Error al procesar RSS: {str(e)}")
+
+# --- 3. ARCHIVOS PARA GUARDAR DATOS ---
 DATA_FILE = "alturas_historico.json"
 PILOTE_HISTORY_FILE = "pilote_historico.json"
 SUDESTADA_FILE = "sudestada_actual.json"
@@ -222,15 +239,19 @@ RSS_URL = "https://www.hidro.gob.ar/RSS/AACrioplarss.asp"
 
 @app.route("/api/alertas")
 def get_alertas():
-    feed = feedparser.parse(RSS_URL)
-    descriptions = [entry.description for entry in feed.entries]
-    return jsonify(descriptions)
+    try:
+        feed = parse_rss_with_timeout(RSS_URL, timeout=20)
+        descriptions = [entry.description for entry in feed.entries]
+        return jsonify(descriptions)
+    except Exception as e:
+        print(f"Error fetching alertas: {e}")
+        return jsonify({"error": "Servicio temporalmente no disponible"}), 503
 
 # --- 7. ALTURA SAN FERNANDO ---
 @app.route("/api/altura_sf")
 def api_altura_sf():
     try:
-        feed = feedparser.parse("https://www.hidro.gob.ar/rss/AHrss.asp")
+        feed = parse_rss_with_timeout("https://www.hidro.gob.ar/rss/AHrss.asp", timeout=20)
 
         for entry in feed.entries:
             desc = entry.description
@@ -263,10 +284,11 @@ def api_altura_sf():
                     "icono": tendencia["icono"]
                 }
 
-        return {"error": "No se encontraron datos de San Fernando"}
+        return {"error": "No se encontraron datos de San Fernando"}, 404
 
     except Exception as e:
-        return {"error": str(e)}
+        print(f"Error fetching San Fernando: {e}")
+        return {"error": "Servicio temporalmente no disponible"}, 503
 
 @app.route("/api/tendencia_sf")
 def get_tendencia_sf():
