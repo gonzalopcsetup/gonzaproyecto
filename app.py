@@ -240,7 +240,7 @@ RSS_URL = "https://www.hidro.gob.ar/RSS/AACrioplarss.asp"
 @app.route("/api/alertas")
 def get_alertas():
     try:
-        feed = parse_rss_with_timeout(RSS_URL, timeout=20)
+        feed = parse_rss_with_timeout(RSS_URL, timeout=60)
         descriptions = [entry.description for entry in feed.entries]
         return jsonify(descriptions)
     except Exception as e:
@@ -251,7 +251,7 @@ def get_alertas():
 @app.route("/api/altura_sf")
 def api_altura_sf():
     try:
-        feed = parse_rss_with_timeout("https://www.hidro.gob.ar/rss/AHrss.asp", timeout=20)
+        feed = parse_rss_with_timeout("https://www.hidro.gob.ar/rss/AHrss.asp", timeout=60)
 
         for entry in feed.entries:
             desc = entry.description
