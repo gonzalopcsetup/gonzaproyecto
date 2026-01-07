@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+  <meta name="theme-color" content="#0d6efd">
+  
+  <!-- TÍTULO -->
+  <title>Pilote Norden - Alertas Río de la Plata</title>
+  
+  <!-- FAVICONS Y ICONOS -->
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/web-app-manifest-192x192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/web-app-manifest-512x512.png">
+  <link rel="manifest" href="/manifest.json">
+  
+  <!-- META TAGS -->
+  <meta name="application-name" content="Río de la Plata Alertas">
+  <meta name="apple-mobile-web-app-title" content="Río Alertas">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="description" content="Monitoreo en tiempo real del Río de la Plata. Alturas, mareas, viento y alertas para San Fernando, Tigre y Delta.">
+  
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <style>
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      padding: 10px;
+      font-family: Arial, sans-serif;
+      margin: 0;
+    }
+
+    .panel {
+      background-color: #1e1e1e;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      border-radius: 8px;
+      margin-bottom: 5px;
+      width: 100%;
+      max-width: 500px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .panel-collapsed {
+      margin-bottom: 4px;
+    }
+
+    .panel-header {
+      background-color: #0d6efd;
+      color: white;
+      padding: 12px 15px;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+      transition: all 0.3s ease;
+    }
+
+    .panel-header:hover {
+      opacity: 0.9;
+    }
+
+    .panel-header-fixed {
+      cursor: default !important;
+      padding: 12px 15px !important;
+    }
+
+    .panel-header-fixed:hover {
+      opacity: 1 !important;
+    }
+
+    .panel-header-fixed .toggle-icon {
+      display: none;
+    }
+
+    .panel-header .toggle-icon {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      transition: transform 0.3s ease;
+      margin-left: 10px;
+    }
+
+    .panel-header.collapsed .toggle-icon {
+      transform: rotate(-90deg);
+    }
+
+    .panel-body {
+      max-height: 1000px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      opacity: 1;
+    }
+
+    .panel-body.collapsed {
+      max-height: 0;
+      opacity: 0;
+      padding: 0 !important;
+      margin: 0 !important;
+      border: none;
+    }
+
+    .panel-body-content {
+      padding: 15px;
+      padding-top: 10px;
+    }
+
+    .wind-direction {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .wind-arrow {
+      display: inline-block;
+      width: 22px;
+      height: 22px;
+      transition: transform 0.5s ease;
+    }
+
+    .content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .main-row {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 10px;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    .left-panel, .right-image {
+      flex: 1 1 300px;
+      max-width: 500px;
+    }
+
+    .right-image img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      display: block;
+    }
+
+    /* ===== MEJORAS PARA MÓVILES ===== */
+    @media (max-width: 768px) {
+      body {
+        padding: 8px;
+        font-size: 14px;
+      }
+      
+      .panel {
+        max-width: 100% !important;
+        margin-bottom: 4px;
+        border-radius: 6px;
+      }
+      
+      .panel-header {
+        font-size: 1rem;
+        padding: 10px 12px;
+      }
+      
+      .panel-header-fixed {
+        padding: 10px 12px !important;
+      }
+      
+      .panel-body p {
+        font-size: 0.9rem;
+        margin: 5px 0;
+      }
+      
+      .main-row {
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      .left-panel, .right-image {
+        flex: 1 1 100%;
+        max-width: 100%;
+      }
+      
+      .right-image img {
+        width: 100%;
+        height: auto;
+        border-radius: 5px;
+      }
+      
+      .content {
+        gap: 4px;
+      }
+      
+      .panel-body-content {
+        padding: 12px;
+        padding-top: 8px;
+      }
+      
+      .wind-arrow svg {
+        width: 18px;
+        height: 18px;
+      }
+      
+      * {
+        max-width: 100%;
+        overflow-wrap: break-word;
+      }
+    }
+
+    @media (max-width: 375px) {
+      body {
+        padding: 6px;
+        font-size: 13px;
+      }
+      
+      .panel {
+        margin-bottom: 3px;
+      }
+      
+      .panel-header {
+        font-size: 0.95rem;
+        padding: 8px 10px;
+      }
+      
+      .panel-header-fixed {
+        padding: 8px 10px !important;
+      }
+      
+      .panel-body p {
+        font-size: 0.85rem;
+        margin: 4px 0;
+      }
+      
+      .content {
+        gap: 3px;
+      }
+      
+      .panel-body-content {
+        padding: 10px;
+        padding-top: 6px;
+      }
+    }
+
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .panel {
+        max-width: 95%;
+        margin-bottom: 6px;
+      }
+      
+      .main-row {
+        flex-wrap: nowrap;
+        gap: 8px;
+      }
+      
+      .left-panel, .right-image {
+        flex: 1 1 48%;
+      }
+    }
+
+    p {
+      line-height: 1.3;
+    }
+    
+    strong {
+      color: #fff;
+    }
+    
+    /* Estilos para tendencia SIMPLE */
+    .tendencia-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+    }
+    
+    .tendencia-icono {
+      font-size: 28px;
+      min-width: 32px;
+      text-align: center;
+    }
+    
+    .tendencia-subiendo {
+      color: #ff6b6b;
+    }
+    
+    .tendencia-bajando {
+      color: #4ecdc4;
+    }
+    
+    .tendencia-estable {
+      color: #aaa;
+    }
+    
+    .cambio-positivo {
+      color: #ff6b6b;
+      font-weight: bold;
+    }
+    
+    .cambio-negativo {
+      color: #4ecdc4;
+      font-weight: bold;
+    }
+    
+    .cambio-neutral {
+      color: #aaa;
+    }
+    
+    /* Estilos para panel de sudestada */
+    .sudestada-panel {
+      border-left: 4px solid #b71c1c;
+      background: rgba(183, 28, 28, 0.05);
+    }
+    
+    .sudestada-header {
+      background: #b71c1c;
+    }
+    
+    /* Estilos para enlaces */
+    a {
+      color: #4ecdc4;
+      text-decoration: none;
+    }
+    
+    a:hover {
+      text-decoration: underline;
+    }
+    
+    /* Logo en esquina */
+    .logo-corner {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      z-index: 100;
+    }
+    
+    .logo-corner img {
+      height: 40px;
+      width: auto;
+      opacity: 0.7;
+    }
+    
+    /* Estilos para lista de enlaces */
+    .enlaces-lista {
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+    
+    .enlaces-lista li {
+      margin-bottom: 3px;
+    }
+
+    /* Estilo especial para Emergencias cuando está colapsado */
+    .panel-header.emergencias-collapsed {
+      background: #2e7d32;
+    }
+
+    /* Estilos para el enlace de MercadoPago */
+    .mercadopago-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: white;
+      color: #333;
+      padding: 14px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1rem;
+      margin-top: 10px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border: 1px solid #ddd;
+      transition: all 0.3s ease;
+    }
+
+    .mercadopago-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+      text-decoration: none;
+      color: #333;
+    }
+
+    .mercadopago-logo {
+      height: 24px;
+      width: auto;
+    }
+
+    @media (max-width: 768px) {
+      .mercadopago-link {
+        padding: 12px 16px;
+        font-size: 0.95rem;
+        margin-top: 8px;
+        gap: 10px;
+      }
+      
+      .mercadopago-logo {
+        height: 22px;
+      }
+    }
+
+    @media (max-width: 375px) {
+      .mercadopago-link {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        margin-top: 6px;
+        gap: 8px;
+      }
+      
+      .mercadopago-logo {
+        height: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="content">
+    <!-- 1. ALERTAS PRIMERO (NO RETRÁCTIL) -->
+    <div class="panel" id="panel-alertas">
+      <div class="panel-header panel-header-fixed">
+        ⚠️ AVISOS / ALERTAS
+      </div>
+      <div class="panel-body">
+        <div class="panel-body-content" id="alertas-body">
+          <p>Cargando avisos...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. PANEL DE SUDESTADA (NO RETRÁCTIL CUANDO ESTÁ VISIBLE) -->
+    <div id="panel-sudestada" class="panel sudestada-panel" style="display: none;">
+      <div class="panel-header panel-header-fixed sudestada-header">
+        🚨 SUDESTADA DETECTADA - PREDICCIÓN TIGRE
+      </div>
+      <div class="panel-body">
+        <div class="panel-body-content">
+          <div style="text-align: center; margin-bottom: 15px;">
+            <div style="font-size: 1.5rem; font-weight: bold; color: #b71c1c;" id="sudestada-pico">-</div>
+            <div style="font-size: 0.85em; color: #aaa;">Pico máximo registrado en Pilote Norden</div>
+          </div>
+          
+          <div style="background: rgba(183, 28, 28, 0.1); padding: 12px; border-radius: 6px; margin: 12px 0;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div style="text-align: center; flex: 1;">
+                <div style="font-size: 0.85em; color: #aaa;">🧭 PILOTE NORDEN</div>
+                <div style="font-size: 1.1rem; font-weight: bold; margin: 5px 0;" id="sudestada-hora-pilote">-</div>
+                <div style="font-size: 1.3rem; font-weight: bold;" id="sudestada-altura-pilote">- m</div>
+              </div>
+              
+              <div style="text-align: center; margin: 0 10px;">
+                <div style="font-size: 1rem;">→ 3.5 h →</div>
+                <div style="font-size: 0.75em; color: #666; margin-top: 3px;">+35 cm</div>
+              </div>
+              
+              <div style="text-align: center; flex: 1;">
+                <div style="font-size: 0.85em; color: #aaa;">📍 TIGRE (ESTIMADO)</div>
+                <div style="font-size: 1.1rem; font-weight: bold; margin: 5px 0;" id="sudestada-hora-tigre">-</div>
+                <div style="font-size: 1.3rem; font-weight: bold; color: #b71c1c;" id="sudestada-altura-tigre">- m</div>
+              </div>
+            </div>
+          </div>
+          
+          <div style="background: #2a2a2a; padding: 10px; border-radius: 6px; margin-top: 15px;">
+            <p style="margin: 0; font-size: 0.85em; color: #aaa;">
+              <strong>📌 Predicción basada en experiencia local:</strong><br>
+              • Altura Tigre ≈ Altura Pilote + 35 cm<br>
+              • Pico en Tigre ≈ 3.5 horas después del pico en Pilote<br>
+              <span style="color: #ff6b6b;">• Panel visible por 4 horas después del pico</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. ALTURA SAN FERNANDO CON TENDENCIA (RETRÁCTIL) -->
+    <div class="panel retractil-panel" id="panel-altura-sf" data-collapsed="false">
+      <div class="panel-header">
+        <span>🌊 Altura Río – San Fernando</span>
+        <span class="toggle-icon">▼</span>
+      </div>
+      <div class="panel-body">
+        <div class="panel-body-content">
+          <!-- Contenedor de tendencia -->
+          <div class="tendencia-container">
+            <div class="tendencia-icono" id="sf-tendencia-icono">➡️</div>
+            <div>
+              <p style="margin: 0; font-size: 1.1rem;">
+                <strong id="sf-altura">-</strong> <small>metros</small>
+              </p>
+              <p style="margin: 0; font-size: 0.85em;" id="sf-tendencia-texto">
+                Cargando tendencia...
+              </p>
+              <p style="margin: 3px 0 0 0; font-size: 0.75em;">
+                Cambio: <span id="sf-cambio" class="cambio-neutral">0.00 m</span>
+              </p>
+            </div>
+          </div>
+          
+          <div style="border-top: 1px solid #333; margin: 10px 0; padding-top: 8px;">
+            <p><strong>📅 Hora de actualización SHN:</strong> <span id="sf-hora">-</span></p>
+            <p><strong>🔄 Sistema Actualizado:</strong> <span id="sf-ultima-act">-</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. PRONÓSTICO (RETRÁCTIL) -->
+    <div class="panel retractil-panel" data-collapsed="false">
+      <div class="panel-header">
+        <span>📈 Pronóstico de Marea</span>
+        <span class="toggle-icon">▼</span>
+      </div>
+      <div class="panel-body">
+        <div class="panel-body-content" style="padding: 0; text-align: center;">
+          <img id="prono-img" src="https://alerta.ina.gob.ar/ina/42-RIODELAPLATA/productos/Prono_SanFernando.png" 
+               alt="Pronóstico San Fernando" 
+               style="width: 100%; max-width: 500px; height: auto; border-radius: 4px;">
+          <p style="padding: 8px; font-size: 0.8em; color: #aaa;">
+            Fuente: INA - Actualizada cada 6 horas
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. DATOS PILOTE NORDEN (RETRÁCTIL) -->
+    <div class="panel retractil-panel" data-collapsed="false">
+      <div class="panel-header">
+        <span>🧭 Pilote Norden</span>
+        <span class="toggle-icon">▼</span>
+      </div>
+      <div class="panel-body">
+        <div class="panel-body-content">
+          <p><strong>📅 Fecha / Hora:</strong> <span id="datetime">-</span></p>
+          <p><strong>🌊 Altura de la marea:</strong> <span id="tide">-</span></p>
+          <p><strong>💨 Velocidad del viento:</strong> <span id="wind-speed">-</span></p>
+          <p><strong>🧭 Dirección del viento:</strong>
+            <span class="wind-direction">
+              <span class="wind-arrow" id="wind-arrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#e0e0e0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="2" x2="12" y2="22"/>
+                  <polyline points="5,15 12,22 19,15"/>
+                </svg>
+              </span>
+              <span id="wind-dir">-</span>
+            </span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. PANEL DE EMERGENCIAS Y ENLACES (RETRÁCTIL) -->
+    <div class="panel retractil-panel" data-collapsed="false">
+      <div class="panel-header">
+        <span>📞 EMERGENCIAS Y ENLACES</span>
+        <span class="toggle-icon">▼</span>
+      </div>
+      <div class="panel-body">
+        <div class="panel-body-content">
+          <!-- EMERGENCIAS INMEDIATAS -->
+          <div style="background: rgba(183, 28, 28, 0.1); padding: 10px; border-radius: 6px; margin-bottom: 15px;">
+            <p style="margin: 0; font-size: 0.9rem; color: #b71c1c;">
+              <strong>🚨 EN CASO DE INUNDACIÓN INMINENTE:</strong><br>
+              1. LLAMAR A DEFENSA CIVIL: <strong>103</strong><br>
+              2. EVACUAR ZONAS BAJAS<br>
+              3. CORTAR LUZ Y GAS<br>
+              4. SEGUIR INSTRUCCIONES OFICIALES
+            </p>
+          </div>
+          
+          <!-- CONTACTOS PRINCIPALES -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+            <div>
+              <strong style="color: #0d6efd;">Nacionales/Provinciales</strong>
+              <p style="margin: 5px 0; font-size: 0.85rem;">
+                911 - Emergencias<br>
+                103 - Defensa Civil<br>
+                107 - SAME<br>
+                100 - Bomberos<br>
+                106 - Prefectura
+              </p>
+            </div>
+            <div>
+              <strong style="color: #0d6efd;">Municipales</strong>
+              <p style="margin: 5px 0; font-size: 0.85rem;">
+                Tigre: 4749-0555<br>
+                S. Fernando: 4746-6133<br>
+                S. Isidro: 4512-3100<br>
+                V. López: 4795-2044
+              </p>
+            </div>
+          </div>
+          
+          <!-- ORGANISMOS HÍDRICOS -->
+          <div style="margin-bottom: 15px;">
+            <strong style="color: #0d6efd;">🌊 Organismos Hídricos</strong>
+            <p style="margin: 5px 0; font-size: 0.85rem;">
+              INA: 011-4328-0720<br>
+              SHN: Pronóstico Mareológico -(0054 11) 4301-0062 / 4301-0064 / 4301-0066 / 4301-0067. Ints.: 4046 y 4109. pronomarea@hidro.gov.ar<br>
+             
+            </p>
+          </div>
+          
+          <!-- ENLACES A SITIOS DE DATOS -->
+          <div style="border-top: 1px solid #333; padding-top: 10px;">
+            <strong style="color: #0d6efd;">🌐 Sitios de Datos:</strong>
+            <ul class="enlaces-lista" style="margin: 5px 0 0 0; padding-left: 20px;">
+              <li><a href="https://www.comisionriodelaplata.org/servicios_main.php?sid=VM" target="_blank">Comisión Río de la Plata (Pilote Norden)</a></li>
+              <li><a href="https://www.ina.gov.ar/alerta/index.php?seccion=10" target="_blank">INA - Sistema de Alertas</a></li>
+              <li><a href="https://www.molol.com/rio/viento-norden.html" target="_blank">Viento Pilote Norden - Molol</a></li>
+              <li><a href="https://www.hidro.gov.ar/oceanografia/AACRIOPLA.asp" target="_blank">Hidrografía Naval - Río de la Plata</a></li>
+              <li><a href="https://www.hidro.gob.ar/smara/MAlturaTotal.asp?op=3" target="_blank">Hidrografía - Altura Total</a></li>
+              <li><a href="https://www.hidro.gov.ar/oceanografia/alturashorarias.asp" target="_blank">Hidrografía - Alturas Horarias</a></li>
+            </ul>
+          </div>
+          
+          <!-- NOTA IMPORTANTE -->
+          <div style="background: rgba(13, 110, 253, 0.1); padding: 8px; border-radius: 6px; margin-top: 10px;">
+            <p style="margin: 0; font-size: 0.75rem; color: #666;">
+              <strong>ℹ️ Esta web es un proyecto independiente.</strong><br>
+              *Los datos provienen de fuentes oficiales, salvo la altura pronosticada para Tigre durante una sudestada, que corresponde a la altura máxima registrada en el Pilote Norden más 35cm que suelen observarse en promedio, lo que implica un margen de error debido a la cantidad de variables que pueden intervenir en esas circunstancias. En emergencias, siga siempre instrucciones de autoridades.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. ENLACE DE MERCADOPAGO -->
+    <a href="http://link.mercadopago.com.ar/alturadelrio" class="mercadopago-link" target="_blank">
+      <img src="https://http2.mlstatic.com/frontend-assets/ui-navigation/5.18.9/mercadopago/logo__large@2x.png" 
+           alt="MercadoPago" 
+           class="mercadopago-logo">
+      <span>Apoyar este proyecto</span>
+    </a>
+  </div>
+
+  <!-- LOGO EN ESQUINA INFERIOR DERECHA -->
+  <div class="logo-corner">
+    <img src="/static/logo.png" alt="Logo" onerror="this.style.display='none'">
+  </div>
+
+  <script>
+    // ==================== FUNCIONES PARA PANELES RETRÁCTILES ====================
+    
+    function initCollapsiblePanels() {
+      const panels = document.querySelectorAll('.retractil-panel');
+      
+      panels.forEach(panel => {
+        const header = panel.querySelector('.panel-header');
+        const body = panel.querySelector('.panel-body');
+        const toggleIcon = header.querySelector('.toggle-icon');
+        
+        // Verificar estado guardado en localStorage
+        const panelId = panel.id || panel.querySelector('.panel-header span').textContent.trim();
+        const storedState = localStorage.getItem(`panel_${panelId}`);
+        
+        if (storedState === 'collapsed') {
+          collapsePanel(panel, body, header, toggleIcon, false);
+        } else if (storedState === null && panelId.includes('Emergencias')) {
+          // Por defecto, Emergencias colapsado
+          collapsePanel(panel, body, header, toggleIcon, false);
+        }
+        
+        header.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (panel.dataset.collapsed === 'true') {
+            expandPanel(panel, body, header, toggleIcon);
+          } else {
+            collapsePanel(panel, body, header, toggleIcon);
+          }
+        });
+      });
+    }
+    
+    function collapsePanel(panel, body, header, toggleIcon, saveState = true) {
+      panel.dataset.collapsed = 'true';
+      body.classList.add('collapsed');
+      header.classList.add('collapsed');
+      toggleIcon.textContent = '▶';
+      
+      // Aplicar estilo especial para Emergencias cuando está colapsado
+      if (header.textContent.includes('EMERGENCIAS')) {
+        header.style.background = '#2e7d32';
+      }
+      
+      if (saveState) {
+        const panelId = panel.id || panel.querySelector('.panel-header span').textContent.trim();
+        localStorage.setItem(`panel_${panelId}`, 'collapsed');
+      }
+    }
+    
+    function expandPanel(panel, body, header, toggleIcon) {
+      panel.dataset.collapsed = 'false';
+      body.classList.remove('collapsed');
+      header.classList.remove('collapsed');
+      toggleIcon.textContent = '▼';
+      
+      // Restaurar color original del encabezado
+      if (header.textContent.includes('EMERGENCIAS')) {
+        header.style.background = '#0d6efd';
+      }
+      
+      const panelId = panel.id || panel.querySelector('.panel-header span').textContent.trim();
+      localStorage.setItem(`panel_${panelId}`, 'expanded');
+    }
+    
+    // ==================== FUNCIONES PRINCIPALES ====================
+    
+    function degreesToCompass(num) {
+      const val = Math.floor((num / 22.5) + 0.5);
+      const arr = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+      return arr[(val % 16)];
+    }
+    
+    // ==================== FUNCIÓN PARA DATOS PILOTE ====================
+    async function fetchData() {
+      try {
+        document.getElementById('tide').innerHTML = '<span style="color:#aaa">Cargando...</span>';
+        document.getElementById('wind-speed').innerHTML = '<span style="color:#aaa">Cargando...</span>';
+        
+        const response = await fetch("/api/telemetria");
+        const data = await response.json();
+
+        // MAREA
+        if (data.tide && data.tide.latest) {
+          const tideHtml = decodeURIComponent(data.tide.latest.replace(/\+/g, " "));
+          const tempDiv = document.createElement("div");
+          tempDiv.innerHTML = tideHtml;
+          const table = tempDiv.querySelector("table");
+          if (table) {
+            const rows = table.querySelectorAll("tr");
+            const lastRow = rows[rows.length - 1];
+            if (lastRow) {
+              const cells = lastRow.querySelectorAll("td");
+              document.getElementById("datetime").innerText = cells[0] ? cells[0].textContent.trim() : "-";
+              document.getElementById("tide").innerText = cells[1] ? cells[1].textContent.trim() + " m" : "-";
+            }
+          } else {
+            document.getElementById("tide").innerText = "No disponible";
+          }
+        } else {
+          document.getElementById("tide").innerText = "No disponible";
+        }
+
+        // VIENTO
+        if (data.wind && data.wind.latest) {
+          const windHtml = decodeURIComponent(data.wind.latest.replace(/\+/g, " "));
+          const tempDiv = document.createElement("div");
+          tempDiv.innerHTML = windHtml;
+          const table = tempDiv.querySelector("table");
+          if (table) {
+            const rows = table.querySelectorAll("tr");
+            const lastRow = rows[rows.length - 1];
+            if (lastRow) {
+              const cells = lastRow.querySelectorAll("td");
+              const speedKnots = cells[1] ? parseFloat(cells[1].textContent.trim()) : null;
+              const dirDeg = cells[4] ? parseFloat(cells[4].textContent.trim()) : null;
+
+              if (speedKnots !== null) {
+                const speedKmh = (speedKnots * 1.852).toFixed(1);
+                document.getElementById("wind-speed").innerText = `${speedKnots} nudos (${speedKmh} km/h)`;
+              } else {
+                document.getElementById("wind-speed").innerText = "No disponible";
+              }
+
+              if (dirDeg !== null) {
+                const compass = degreesToCompass(dirDeg);
+                document.getElementById("wind-dir").innerText = `${dirDeg.toFixed(1)}° (${compass})`;
+                document.getElementById("wind-arrow").style.transform = `rotate(${dirDeg}deg)`;
+              } else {
+                document.getElementById("wind-dir").innerText = "-";
+                document.getElementById("wind-arrow").style.transform = `rotate(0deg)`;
+              }
+            }
+          } else {
+            document.getElementById("wind-speed").innerText = "No disponible";
+            document.getElementById("wind-dir").innerText = "-";
+          }
+        } else {
+          document.getElementById("wind-speed").innerText = "No disponible";
+          document.getElementById("wind-dir").innerText = "-";
+        }
+
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        document.getElementById('tide').innerHTML = '<span style="color:#ff6b6b">No disponible</span>';
+        document.getElementById('wind-speed').innerHTML = '<span style="color:#ff6b6b">Intente recargar</span>';
+      }
+      
+      // Después de cargar datos, verificar sudestada
+      setTimeout(fetchSudestada, 1000);
+    }
+    
+    // ==================== FUNCIÓN PARA ALERTAS ====================
+    async function fetchAlertas() {
+      try {
+        const response = await fetch("/api/alertas");
+        const data = await response.json();
+        const alertasBody = document.getElementById("alertas-body");
+        alertasBody.innerHTML = "";
+
+        let estado = "blue";
+
+        if (data.length === 0) {
+          alertasBody.innerHTML = "<p>No hay avisos vigentes.</p>";
+        } else {
+          data.forEach(desc => {
+            const p = document.createElement("p");
+            p.innerHTML = desc;
+            alertasBody.appendChild(p);
+
+            const texto = desc.toLowerCase();
+            if (texto.includes("no hay ningun aviso") && texto.includes("alerta") && texto.includes("cese")) {
+              estado = "blue";
+            } else if (texto.includes("alerta")) {
+              estado = "red";
+            } else if (texto.includes("aviso") && estado !== "red") {
+              estado = "yellow";
+            } else if (texto.includes("cese") && estado !== "red" && estado !== "yellow") {
+              estado = "green";
+            }
+          });
+        }
+
+        const panel = document.getElementById("panel-alertas");
+        switch (estado) {
+          case "red": panel.style.backgroundColor = "#b71c1c"; break;
+          case "yellow": panel.style.backgroundColor = "#fbc02d"; break;
+          case "green": panel.style.backgroundColor = "#2e7d32"; break;
+          default: panel.style.backgroundColor = "#0d6efd"; break;
+        }
+
+      } catch (error) {
+        console.error("Error fetching alertas:", error);
+        document.getElementById("alertas-body").innerHTML = "<p>Error cargando avisos.</p>";
+        document.getElementById("panel-alertas").style.backgroundColor = "#0d6efd";
+      }
+    }
+    
+    // ==================== FUNCIÓN SAN FERNANDO ====================
+    async function fetchSanFernando() {
+      try {
+        const response = await fetch("/api/altura_sf");
+        const data = await response.json();
+
+        if (data.error) {
+          document.getElementById("sf-altura").innerText = "No disponible";
+          document.getElementById("sf-hora").innerText = "-";
+          return;
+        }
+
+        // Actualizar altura y hora
+        document.getElementById("sf-altura").innerText = data.altura;
+        document.getElementById("sf-hora").innerText = data.hora ?? "-";
+        
+        // Actualizar última actualización
+        const ahora = new Date();
+        document.getElementById("sf-ultima-act").innerText = 
+          ahora.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
+        
+        // Actualizar tendencia
+        actualizarTendenciaUI(data.tendencia, data.icono, data.cambio);
+
+      } catch (error) {
+        console.error("Error San Fernando:", error);
+        document.getElementById("sf-altura").innerText = "Error";
+        document.getElementById("sf-tendencia-texto").innerText = "Error al cargar";
+      }
+    }
+    
+    // ==================== FUNCIÓN TENDENCIA SAN FERNANDO ====================
+    async function fetchTendenciaSF() {
+      try {
+        const response = await fetch("/api/tendencia_sf");
+        const data = await response.json();
+        
+        if (data.error) {
+          console.warn("Error en tendencia:", data.error);
+          return;
+        }
+        
+        actualizarTendenciaUI(data.tendencia, data.icono, data.cambio);
+        
+      } catch (error) {
+        console.error("Error obteniendo tendencia:", error);
+      }
+    }
+    
+    function actualizarTendenciaUI(tendencia, icono, cambio) {
+      // Actualizar icono
+      document.getElementById("sf-tendencia-icono").textContent = icono;
+      
+      // Actualizar texto y colores
+      const textoElem = document.getElementById("sf-tendencia-texto");
+      const cambioElem = document.getElementById("sf-cambio");
+      const iconoElem = document.getElementById("sf-tendencia-icono");
+      
+      // Remover clases anteriores
+      textoElem.className = "";
+      cambioElem.className = "";
+      iconoElem.className = "tendencia-icono";
+      
+      // Configurar según tendencia (SIMPLE: solo 3 opciones)
+      if (tendencia === "subiendo") {
+        textoElem.textContent = "SUBIENDO";
+        textoElem.classList.add("tendencia-subiendo");
+        cambioElem.textContent = (cambio > 0 ? "+" : "") + cambio.toFixed(2) + " m";
+        cambioElem.classList.add("cambio-positivo");
+        iconoElem.classList.add("tendencia-subiendo");
+      } else if (tendencia === "bajando") {
+        textoElem.textContent = "BAJANDO";
+        textoElem.classList.add("tendencia-bajando");
+        cambioElem.textContent = cambio.toFixed(2) + " m";
+        cambioElem.classList.add("cambio-negativo");
+        iconoElem.classList.add("tendencia-bajando");
+      } else {
+        textoElem.textContent = "ESTABLE";
+        textoElem.classList.add("tendencia-estable");
+        cambioElem.textContent = "±0.00 m";
+        cambioElem.classList.add("cambio-neutral");
+        iconoElem.classList.add("tendencia-estable");
+      }
+    }
+    
+    // ==================== FUNCIÓN PRONÓSTICO ====================
+    function refreshProno() {
+      const img = document.getElementById('prono-img');
+      const now = new Date().getTime();
+      
+      img.src = "https://alerta.ina.gob.ar/ina/42-RIODELAPLATA/productos/Prono_SanFernando.png?t=" + now;
+      
+      img.style.opacity = "0.7";
+      img.onload = function() {
+        img.style.opacity = "1";
+      };
+      img.onerror = function() {
+        img.alt = "Imagen no disponible - Consulte INA.gob.ar";
+        img.style.opacity = "0.5";
+      };
+    }
+    
+    // ==================== FUNCIÓN PARA SUDESTADA ====================
+    async function fetchSudestada() {
+      try {
+        const response = await fetch("/api/sudestada");
+        const data = await response.json();
+        
+        const panel = document.getElementById("panel-sudestada");
+        
+        if (data.activa) {
+          // MOSTRAR PANEL
+          panel.style.display = "block";
+          
+          // Actualizar datos
+          document.getElementById("sudestada-pico").textContent = 
+            data.pico_maximo.toFixed(2) + " m";
+          document.getElementById("sudestada-altura-pilote").textContent = 
+            data.pico_maximo.toFixed(2) + " m";
+          document.getElementById("sudestada-hora-pilote").textContent = 
+            data.hora_pico;
+          document.getElementById("sudestada-altura-tigre").textContent = 
+            data.altura_tigre_estimada.toFixed(2) + " m";
+          document.getElementById("sudestada-hora-tigre").textContent = 
+            data.hora_tigre_estimada;
+          
+          // Si hay mensaje de predicción, mostrarlo
+          if (data.prediccion_tigre) {
+            panel.querySelector('.panel-body p strong').innerHTML = 
+              data.prediccion_tigre.replace('Tigre: ~', '');
+          }
+          
+        } else {
+          // OCULTAR PANEL
+          panel.style.display = "none";
+        }
+        
+      } catch (error) {
+        console.error("Error obteniendo datos de sudestada:", error);
+        document.getElementById("panel-sudestada").style.display = "none";
+      }
+    }
+    
+    // ==================== INICIALIZACIÓN ====================
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      // Inicializar paneles retráctiles
+      initCollapsiblePanels();
+      
+      // Expandir automáticamente paneles importantes al cargar (excepto Emergencias)
+      setTimeout(() => {
+        const importantPanels = ['panel-altura-sf'];
+        importantPanels.forEach(panelId => {
+          const panel = document.getElementById(panelId);
+          if (panel && panel.dataset.collapsed === 'true') {
+            const header = panel.querySelector('.panel-header');
+            const body = panel.querySelector('.panel-body');
+            const toggleIcon = header.querySelector('.toggle-icon');
+            expandPanel(panel, body, header, toggleIcon);
+          }
+        });
+      }, 500);
+    });
+    
+    // EJECUTAR AL CARGAR
+    fetchData();
+    fetchAlertas();
+    fetchSanFernando();
+    refreshProno();
+    
+    // Llamar a tendencia después de un breve delay
+    setTimeout(fetchTendenciaSF, 1000);
+    
+    // Llamar a sudestada después de un breve delay
+    setTimeout(fetchSudestada, 2000);
+
+    // INTERVALOS 5 MINUTOS
+    setInterval(fetchData, 300000);
+    setInterval(fetchAlertas, 300000);
+    setInterval(fetchSanFernando, 300000);
+    setInterval(refreshProno, 300000);
+    setInterval(fetchTendenciaSF, 300000);
+    setInterval(fetchSudestada, 300000);
+    
+    // Actualizar hora de última actualización cada minuto
+    setInterval(() => {
+      const ahora = new Date();
+      const horaActualizada = ahora.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
+      document.getElementById("sf-ultima-act").innerText = horaActualizada;
+    }, 60000);
+  </script>
+</body>
+</html>

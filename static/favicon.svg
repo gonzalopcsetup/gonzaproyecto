@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="512" height="512"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="512" height="512"><svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="circleClip">
+      <circle cx="256" cy="256" r="240"></circle>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#circleClip)">
+    <!-- Fondo: Cielo y Río de la Plata -->
+    <rect width="512" height="256" fill="#87CEEB"></rect>
+    <rect y="256" width="512" height="256" fill="#8B5A2B"></rect>
+    
+    <!-- ESCALA DE MEDICIÓN REFORZADA (IZQUIERDA) -->
+    <!-- Fondo de la regla para mayor visibilidad -->
+    <rect x="60" y="70" width="15" height="372" fill="black" fill-opacity="0.1"></rect>
+    <g stroke="black" stroke-width="12" stroke-linecap="round">
+      <line x1="60" y1="100" x2="110" y2="100"></line> <!-- Nivel Superior -->
+      <line x1="60" y1="180" x2="110" y2="180"></line>
+      <line x1="60" y1="260" x2="130" y2="260" stroke-width="14"></line> <!-- NIVEL CERO -->
+      <line x1="60" y1="340" x2="110" y2="340"></line>
+      <line x1="60" y1="420" x2="110" y2="420"></line> <!-- Nivel Inferior -->
+    </g>
+  </g>
+
+  <!-- BOYA CENTRAL GRANDE -->
+  <!-- Flotador -->
+  <path d="M180 345 L332 345 L310 260 L202 260 Z" fill="#D62828"></path>
+  <rect x="202" y="290" width="108" height="18" fill="white"></rect>
+  
+  <!-- Estructura de Torre -->
+  <path d="M210 260 L256 110 L302 260" stroke="#1A1A1A" stroke-width="8" fill="none"></path>
+  <line x1="225" y1="205" x2="287" y2="205" stroke="#1A1A1A" stroke-width="6"></line>
+  <line x1="240" y1="155" x2="272" y2="155" stroke="#1A1A1A" stroke-width="6"></line>
+  
+  <!-- Antena -->
+  <line x1="256" y1="110" x2="256" y2="70" stroke="#1A1A1A" stroke-width="6"></line>
+  <circle cx="256" cy="65" r="8" fill="#D62828"></circle>
+
+  <!-- Borde exterior -->
+  <circle cx="256" cy="256" r="240" stroke="#1A1A1A" stroke-width="12" fill="none"></circle>
+</svg></svg><style>@media (prefers-color-scheme: light) { :root { filter: none; } }
+@media (prefers-color-scheme: dark) { :root { filter: none; } }
+</style></svg>
